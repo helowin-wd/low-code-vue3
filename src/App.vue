@@ -17,7 +17,7 @@ export default {
   },
   setup() {
     const state = ref(data)
-
+    // 将组件的配置注册全局
     provide('config', config)
 
     return {

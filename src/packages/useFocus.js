@@ -29,15 +29,21 @@ export function useFocus(data, cb) {
     e.stopPropagation()
     // block 上规划一个属性 focus 获取焦点后就将focus变为true
     if (e.shiftKey) {
-      // 按住shift键，实现多选
-      block.focus = !block.focus
+      // 【bug】 解决元素失去焦点时，鼠标移动还是触发move事件
+      if(focusData.value.focusArr.length <= 1) {
+        block.focus = true; // 当前只有一个节点被选中时，按住shift也不会切换focus状态
+      } else {
+        // 按住shift键，实现多选
+        block.focus = !block.focus
+      }
     } else {
       if (!block.focus) {
         clearBlockFocus()
         // 每次点击清空其他元素的focus选中效果
         block.focus = true
       } else {
-        block.focus = false
+        // 【bug】当前元素已经是选中状态，再次点击还是选中状态
+        // block.focus = false
       }
     }
     cb(e)
