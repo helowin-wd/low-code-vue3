@@ -1,15 +1,21 @@
-import { computed, defineComponent, inject } from 'vue'
+import { computed, defineComponent, inject, ref } from 'vue'
 import './editor.scss'
-import editorBlock from './editor-block'
+import EditorBlock from './editor-block'
+import deepcopy from 'deepcopy'
+import { useMenuDragger } from './useMenuDragger'
 
 export default defineComponent({
   props: {
     modelValue: { type: Object }
   },
-  setup(props) {
+  emits: ["update:modelValue"],
+  setup(props, ctx) {
     const data = computed({
       get() {
         return props.modelValue
+      },
+      set(newVal) {
+        ctx.emit("update:modelValue", deepcopy(newVal))
       }
     })
 
@@ -19,12 +25,20 @@ export default defineComponent({
     }))
 
     const config = inject('config')
+    const containerRef = ref(null)
+    // 实现菜单的拖拽功能，组件渲染功能
+    const {dragStart, dragEnd } = useMenuDragger(containerRef, data)
 
     return () => (
       <div class="editor">
         <div class="editor-left">
           {config.componentList.map(comp => (
-            <div class="editor-left-item">
+            <div 
+              class="editor-left-item" 
+              draggable
+              onDragstart={ e => dragStart(e, comp)}
+              onDragend={ e => dragEnd(e, comp)}
+            >
               <span>{comp.label}</span>
               <div>{comp.preview()}</div>
             </div>
@@ -34,9 +48,9 @@ export default defineComponent({
         <div class="editor-right">属性控制栏</div>
         <div class="editor-container">
           <div class="editor-container-canvas">
-            <div class="editor-container-canvas__content" style={containerStyle.value}>
+            <div class="editor-container-canvas__content" style={containerStyle.value} ref={containerRef}>
               {data.value.blocks.map(block => (
-                <editorBlock block={block}></editorBlock>
+                <EditorBlock block={block}></EditorBlock>
               ))}
             </div>
           </div>
