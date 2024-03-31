@@ -3,6 +3,8 @@ import './editor.scss'
 import EditorBlock from './editor-block'
 import deepcopy from 'deepcopy'
 import { useMenuDragger } from './useMenuDragger'
+import { useFocus } from './useFocus'
+import { useBlockDragger } from './useBlockDragger'
 
 export default defineComponent({
   props: {
@@ -26,8 +28,15 @@ export default defineComponent({
 
     const config = inject('config')
     const containerRef = ref(null)
-    // 实现菜单的拖拽功能，组件渲染功能
+    // 1. 实现菜单的拖拽功能，组件渲染功能
     const {dragStart, dragEnd } = useMenuDragger(containerRef, data)
+    // 3. 实现获取焦点 选中后可能就进行拖拽了
+    const { containerMouseDown, onMousedown, focusData } = useFocus(data, (e) => {
+      // 【注意】回调函数，最后执行 
+      mousedown(e) // 选中了哪些
+    })
+    // 2. 实现组件拖拽
+    const { mousedown } = useBlockDragger(focusData)
 
     return () => (
       <div class="editor">
@@ -48,9 +57,18 @@ export default defineComponent({
         <div class="editor-right">属性控制栏</div>
         <div class="editor-container">
           <div class="editor-container-canvas">
-            <div class="editor-container-canvas__content" style={containerStyle.value} ref={containerRef}>
+            <div 
+              class="editor-container-canvas__content" 
+              style={containerStyle.value} 
+              ref={containerRef}
+              onMousedown={containerMouseDown}
+            >
               {data.value.blocks.map(block => (
-                <EditorBlock block={block}></EditorBlock>
+                <EditorBlock 
+                class={block.focus ? "editor-block-focus" : ""}
+                block={block}
+                onMousedown={(e) => onMousedown(e, block)}
+                ></EditorBlock>
               ))}
             </div>
           </div>
