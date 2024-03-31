@@ -22,8 +22,11 @@ export default defineComponent({
       if (props.block.alignCenter) {
         props.block.left = props.block.left - offsetWidth / 2
         props.block.top = props.block.top - offsetHeight / 2
-        props.block.alignCenter = false
+        props.block.alignCenter = false // 让渲染后的结果才能居中
       }
+      // 添加元素宽高，用于计算元素辅助线的位置
+      props.block.width = offsetWidth
+      props.block.height = offsetHeight
     })
 
     return () => (

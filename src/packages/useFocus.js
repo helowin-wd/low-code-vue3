@@ -1,4 +1,4 @@
-import { computed } from "vue"
+import { computed, ref } from "vue"
 
 /**
  * 获取那些元素被选中
@@ -6,6 +6,11 @@ import { computed } from "vue"
  * @returns 
  */
 export function useFocus(data, cb) {
+  // 当选中多个元素时，添加元素辅助线，以选中的最后一个元素为准
+  const selectIndex = ref(-1)
+  // 选中的最后一个元素
+  const lastSelectBlock = computed(() => data.value.blocks[selectIndex.value])
+
   // 计算选中了那些元素，用于多元素批量移动
   const focusData = computed(() => {
     let focusArr = []
@@ -23,8 +28,9 @@ export function useFocus(data, cb) {
   const containerMouseDown = () => {
     // 鼠标点击容器，让选中的失去焦点，取消全部选中效果
     clearBlockFocus()
+    selectIndex.value = -1;
   }
-  const onMousedown = (e, block) => {
+  const onMousedown = (e, block, index) => {
     e.preventDefault()
     e.stopPropagation()
     // block 上规划一个属性 focus 获取焦点后就将focus变为true
@@ -46,12 +52,14 @@ export function useFocus(data, cb) {
         // block.focus = false
       }
     }
+    selectIndex.value = index;
     cb(e)
   }
 
   return {
     containerMouseDown,
     onMousedown,
-    focusData
+    focusData,
+    lastSelectBlock
   }
 }

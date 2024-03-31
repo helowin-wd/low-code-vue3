@@ -84,7 +84,22 @@
   }
   .editor-block-focus {
     &::after {
-      border: 1px dashed red;
+      border: 2px dashed red;
     }
   }
+}
+
+// x 移动left值
+.line-x {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-left: 2px dashed red;
+}
+// y 移动top值
+.line-y {
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-top: 2px dashed red;
 }
