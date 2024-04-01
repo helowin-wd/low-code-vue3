@@ -1,3 +1,5 @@
+import { events } from "./events"
+
 /**
  * 物料区拖拽相关
  * @param {*} containerRef 
@@ -50,17 +52,23 @@ export function useMenuDragger(containerRef, data) {
    * @param {*} comp
    */
   const dragStart = (e, comp) => {
-    currentComp = comp
     containerRef.value.addEventListener('dragenter', dragenter)
     containerRef.value.addEventListener('dragover', dragover)
     containerRef.value.addEventListener('dragleave', dragleave)
     containerRef.value.addEventListener('drop', drop)
+    currentComp = comp
+
+    //【发布start】拖拽前记录状态 - 用于：撤销/重做功能
+    events.emit("start")
   }
   const dragEnd = () => {
     containerRef.value.removeEventListener('dragenter', dragenter)
     containerRef.value.removeEventListener('dragover', dragover)
     containerRef.value.removeEventListener('dragleave', dragleave)
     containerRef.value.removeEventListener('drop', drop)
+
+    //【发布end】拖拽后记录状态 - 用于：撤销/重做功能
+    events.emit("end")
   }
 
   return {

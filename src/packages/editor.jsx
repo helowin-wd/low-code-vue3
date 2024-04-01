@@ -5,6 +5,7 @@ import deepcopy from 'deepcopy'
 import { useMenuDragger } from './useMenuDragger'
 import { useFocus } from './useFocus'
 import { useBlockDragger } from './useBlockDragger'
+import { useCommand } from './useCommand'
 
 export default defineComponent({
   props: {
@@ -40,6 +41,13 @@ export default defineComponent({
     // 2. 实现组件拖拽
     const { mousedown, markLine } = useBlockDragger(focusData, lastSelectBlock, data)
 
+    // 按钮工具栏
+    const { commands } = useCommand(data)
+    const buttons = [
+      { label: "撤销", icon: "", handler: () => commands.undo() },
+      { label: "重做", icon: "", handler: () => commands.redo() }
+    ]
+
     return () => (
       <div class="editor">
         <div class="editor-left">
@@ -56,7 +64,16 @@ export default defineComponent({
             </div>
           ))}
         </div>
-        <div class="editor-top">菜单栏</div>
+        <div class="editor-top">
+          {
+            buttons.map((btn, idx) => (
+              <div class="editor-top-button" onClick={btn.handler}>
+                <i class={btn.icon}></i>
+                <span>{btn.label}</span>
+              </div>
+            ))
+          }
+        </div>
         <div class="editor-right">属性控制栏</div>
         <div class="editor-container">
           <div class="editor-container-canvas">
