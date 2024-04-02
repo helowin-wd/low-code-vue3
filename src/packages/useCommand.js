@@ -28,8 +28,8 @@ export function useCommand(data) {
   //【注册命令】
   const registry = command => {
     state.commandArray.push(command)
-    state.commands[command.name] = () => {
-      const { redo, undo } = command.execute()
+    state.commands[command.name] = (...args) => {
+      const { redo, undo } = command.execute(...args)
       redo()
       // 不需要放到队列中直接跳过即可
       if (!command.pushQueue) {
@@ -129,6 +129,32 @@ export function useCommand(data) {
     }
   })
 
+  /**
+   * 更新整个容器 - 用于导入JSON
+   * 
+   * 带有历史记录的常用模式：before after
+   */
+  registry({
+    name: 'updateContainer',
+    pushQueue: true,
+    execute(newValue) {
+      let state = {
+        before: data.value, // 当前的值
+        after: newValue // 新值
+      }
+      return {
+        // 前进
+        redo: () => {
+          data.value = state.after
+        },
+        // 后退
+        undo: () => {
+          data.value = state.before
+        }
+      }
+    }
+  })
+
   // 键盘事件
   const keyboardEvent = (() => {
     const keyCodes = {
@@ -141,7 +167,7 @@ export function useCommand(data) {
       if (ctrlKey) keyString.push('ctrl')
       keyString.push(keyCodes[keyCode])
       keyString = keyString.join('+')
-      
+
       state.commandArray.forEach(({ keyboard, name }) => {
         if (!keyboard) return // 没有键盘事件
         if (keyboard === keyString) {
