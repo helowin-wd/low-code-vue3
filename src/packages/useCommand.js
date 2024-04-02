@@ -7,7 +7,7 @@ import { onUnmounted } from 'vue'
  *
  * @returns
  */
-export function useCommand(data) {
+export function useCommand(data, focusData) {
   /**
    * 【状态】：前进后退需要的指针
    *
@@ -131,7 +131,7 @@ export function useCommand(data) {
 
   /**
    * 更新整个容器 - 用于导入JSON
-   * 
+   *
    * 带有历史记录的常用模式：before after
    */
   registry({
@@ -151,6 +151,82 @@ export function useCommand(data) {
         undo: () => {
           data.value = state.before
         }
+      }
+    }
+  })
+
+  /**
+   * 置顶操作
+   */
+  registry({
+    name: 'placeTop',
+    pushQueue: true,
+    execute() {
+      let before = deepcopy(data.value.blocks)
+      // 置顶就是在所有的block中找到最大的zIndex
+      let after = (() => {
+        let { focusArr, unFocusArr } = focusData.value
+        let maxZIndex = unFocusArr.reduce((prev, block) => {
+          return Math.max(prev, block.zIndex)
+        }, -Infinity)
+
+        console.log({ focusArr, unFocusArr, maxZIndex })
+
+        // 让当前选中的比最大的+1
+        focusArr.forEach(block => (block.zIndex = maxZIndex + 1))
+        return data.value.blocks
+      })()
+      return {
+        undo: () => {
+          // 如果当前blocks 前后一致 则不会更新 => 解决方案👆 深拷贝
+          data.value = { ...data.value, blocks: before }
+        },
+        redo: () => {
+          data.value = { ...data.value, blocks: after }
+        },
+        
+      }
+    }
+  })
+
+  /**
+   * 置底操作
+   */
+  registry({
+    name: 'placeBottom',
+    pushQueue: true,
+    execute() {
+      let before = deepcopy(data.value.blocks)
+      // 置顶就是在所有的block中找到最大的zIndex
+      let after = (() => {
+        let { focusArr, unFocusArr } = focusData.value
+        let minZIndex = unFocusArr.reduce((prev, block) => {
+          return Math.min(prev, block.zIndex)
+        }, Infinity) - 1;
+
+        /**
+         * 不能直接-1 因为index 不能出现负值 负值就看不到组件了
+         * 
+         * 解决方案：这里如果是负值，则让每选中的向上，自己变成0
+         */
+        if(minZIndex < 0) {
+          const dur = Math.abs(minZIndex);
+          minZIndex = 0;
+          unFocusArr.forEach(block => block.zIndex += dur)
+        }
+        // 控制选中的值
+        focusArr.forEach(block => (block.zIndex = minZIndex))
+        return data.value.blocks
+      })()
+      return {
+        undo: () => {
+          // 如果当前blocks 前后一致 则不会更新 => 解决方案👆 深拷贝
+          data.value = { ...data.value, blocks: before }
+        },
+        redo: () => {
+          data.value = { ...data.value, blocks: after }
+        },
+        
       }
     }
   })

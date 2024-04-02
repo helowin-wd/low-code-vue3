@@ -43,7 +43,7 @@ export default defineComponent({
     const { mousedown, markLine } = useBlockDragger(focusData, lastSelectBlock, data)
 
     // 按钮工具栏
-    const { commands } = useCommand(data)
+    const { commands } = useCommand(data, focusData)
     const buttons = [
       { label: '撤销', icon: '', handler: () => commands.undo() },
       { label: '重做', icon: '', handler: () => commands.redo() },
@@ -68,11 +68,13 @@ export default defineComponent({
             footer: true,
             onConfirm(text) {
               // data.value = JSON.parse(text); // 这样去更改无法保留历史记录
-              commands.updateContainer(JSON.parse(text));
+              commands.updateContainer(JSON.parse(text))
             }
           })
         }
-      }
+      },
+      { label: '置顶', icon: '', handler: () => commands.placeTop() },
+      { label: '置底', icon: '', handler: () => commands.placeBottom() }
     ]
 
     return () => (
