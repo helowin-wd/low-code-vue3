@@ -5,7 +5,7 @@ import { computed, ref } from "vue"
  * @param {*} data 
  * @returns 
  */
-export function useFocus(data, cb) {
+export function useFocus(data, previewRef, cb) {
   // 当选中多个元素时，添加元素辅助线，以选中的最后一个元素为准
   const selectIndex = ref(-1)
   // 选中的最后一个元素
@@ -26,11 +26,15 @@ export function useFocus(data, cb) {
     data.value.blocks.forEach(block => (block.focus = false))
   }
   const containerMouseDown = () => {
+    if(previewRef.value) return
+
     // 鼠标点击容器，让选中的失去焦点，取消全部选中效果
     clearBlockFocus()
     selectIndex.value = -1;
   }
   const onMousedown = (e, block, index) => {
+    if(previewRef.value) return
+
     e.preventDefault()
     e.stopPropagation()
     // block 上规划一个属性 focus 获取焦点后就将focus变为true
@@ -60,6 +64,7 @@ export function useFocus(data, cb) {
     containerMouseDown,
     onMousedown,
     focusData,
-    lastSelectBlock
+    lastSelectBlock,
+    clearBlockFocus
   }
 }

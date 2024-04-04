@@ -7,6 +7,7 @@ import { useFocus } from './useFocus'
 import { useBlockDragger } from './useBlockDragger'
 import { useCommand } from './useCommand'
 import { $dialog } from '@/components/Dialog'
+import { ElButton } from 'element-plus'
 
 export default defineComponent({
   props: {
@@ -15,6 +16,11 @@ export default defineComponent({
   },
   emits: ['update:modelValue'],
   setup(props, ctx) {
+    // 预览的时候 内容不能再操作了 可以点击 输入内容 方便看效果
+    const previewRef = ref(false)
+    // 判断是否是编辑状态
+    const editorRef = ref(true)
+
     const data = computed({
       get() {
         return props.modelValue
@@ -35,7 +41,7 @@ export default defineComponent({
     // 1. 实现菜单的拖拽功能，组件渲染功能
     const { dragStart, dragEnd } = useMenuDragger(containerRef, data)
     // 3. 实现获取焦点 选中后可能就进行拖拽了
-    const { containerMouseDown, onMousedown, focusData, lastSelectBlock } = useFocus(data, e => {
+    const { containerMouseDown, onMousedown, focusData, lastSelectBlock, clearBlockFocus } = useFocus(data, previewRef, e => {
       // 【注意】回调函数，最后执行
       mousedown(e) // 选中了哪些, 获取焦点后进行拖拽
     })
@@ -76,41 +82,84 @@ export default defineComponent({
       { label: '置顶', icon: '', handler: () => commands.placeTop() },
       { label: '置底', icon: '', handler: () => commands.placeBottom() },
       { label: '删除', icon: '', handler: () => commands.delete() },
+      {
+        label: () => (previewRef.value ? '编辑' : '预览'),
+        icon: previewRef.value ? 'edit' : 'pre',
+        handler: () => {
+          previewRef.value = !previewRef.value
+          clearBlockFocus()
+        }
+      },
+      {
+        label: '关闭',
+        icon: 'icon-close',
+        handler: () => {
+          editorRef.value = false
+          clearBlockFocus()
+        }
+      }
     ]
 
-    return () => (
-      <div class="editor">
-        <div class="editor-left">
-          {/* 根据注册列表 渲染对应的内容 可以实现h5的拖拽 */}
-          {config.componentList.map(comp => (
-            <div class="editor-left-item" draggable onDragstart={e => dragStart(e, comp)} onDragend={e => dragEnd(e, comp)}>
-              <span>{comp.label}</span>
-              <div>{comp.preview()}</div>
-            </div>
-          ))}
-        </div>
-        <div class="editor-top">
-          {buttons.map((btn, idx) => (
-            <div class="editor-top-button" onClick={btn.handler}>
-              <i class={btn.icon}></i>
-              <span>{btn.label}</span>
-            </div>
-          ))}
-        </div>
-        <div class="editor-right">属性控制栏</div>
-        <div class="editor-container">
-          <div class="editor-container-canvas">
-            <div class="editor-container-canvas__content" style={containerStyle.value} ref={containerRef} onMousedown={containerMouseDown}>
-              {data.value.blocks.map((block, index) => (
-                <EditorBlock class={block.focus ? 'editor-block-focus' : ''} block={block} onMousedown={e => onMousedown(e, block, index)}></EditorBlock>
-              ))}
-              {/* 辅助线 */}
-              {markLine.x !== null && <div class="line-x" style={{ left: markLine.x + 'px' }}></div>}
-              {markLine.y !== null && <div class="line-y" style={{ top: markLine.y + 'px' }}></div>}
+    return () =>
+      !editorRef.value ? (
+        <>
+          <div class="editor-container-canvas__content" style={{...containerStyle.value, margin: 0}}>
+            {data.value.blocks.map((block, index) => (
+              <EditorBlock
+                class='editor-block-preview'
+                block={block}
+              ></EditorBlock>
+            ))}
+          </div>
+          <div>
+            <ElButton type="primary" onClick={() => editorRef.value = true}>继续编辑</ElButton>
+          </div>
+        </>
+      ) : (
+        <div class="editor">
+          <div class="editor-left">
+            {/* 根据注册列表 渲染对应的内容 可以实现h5的拖拽 */}
+            {config.componentList.map(comp => (
+              <div class="editor-left-item" draggable onDragstart={e => dragStart(e, comp)} onDragend={e => dragEnd(e, comp)}>
+                <span>{comp.label}</span>
+                <div>{comp.preview()}</div>
+              </div>
+            ))}
+          </div>
+          <div class="editor-top">
+            {buttons.map((btn, idx) => {
+              const icon = typeof btn.icon === 'function' ? btn.icon() : btn.icon
+              const label = typeof btn.label === 'function' ? btn.label() : btn.label
+
+              return (
+                <div class="editor-top-button" onClick={btn.handler}>
+                  <i class={icon}></i>
+                  <span>{label}</span>
+                </div>
+              )
+            })}
+          </div>
+          <div class="editor-right">属性控制栏</div>
+          <div class="editor-container">
+            <div class="editor-container-canvas">
+              <div class="editor-container-canvas__content" style={containerStyle.value} ref={containerRef} onMousedown={containerMouseDown}>
+                {data.value.blocks.map((block, index) => (
+                  <EditorBlock
+                    class={{
+                      'editor-block-focus': block.focus,
+                      'editor-block-preview': previewRef.value
+                    }}
+                    block={block}
+                    onMousedown={e => onMousedown(e, block, index)}
+                  ></EditorBlock>
+                ))}
+                {/* 辅助线 */}
+                {markLine.x !== null && <div class="line-x" style={{ left: markLine.x + 'px' }}></div>}
+                {markLine.y !== null && <div class="line-y" style={{ top: markLine.y + 'px' }}></div>}
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    )
+      )
   }
 })
