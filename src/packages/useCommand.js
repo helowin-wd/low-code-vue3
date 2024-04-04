@@ -231,6 +231,28 @@ export function useCommand(data, focusData) {
     }
   })
 
+   /**
+   * 删除操作
+   */
+   registry({
+    name: 'delete',
+    pushQueue: true,
+    execute() {
+      let state = {
+        before: deepcopy(data.value.blocks), // 当前的值
+        after: focusData.value.unFocusArr // 选中的都删除了，留下的都是没选中的
+      }
+      return {
+        redo: () => {
+          data.value = { ...data.value, blocks: state.after }
+        },
+        undo: () => {
+          data.value = { ...data.value, blocks: state.before }
+        },
+      }
+    }
+  })
+
   // 键盘事件
   const keyboardEvent = (() => {
     const keyCodes = {

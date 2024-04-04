@@ -74,7 +74,8 @@ export default defineComponent({
         }
       },
       { label: '置顶', icon: '', handler: () => commands.placeTop() },
-      { label: '置底', icon: '', handler: () => commands.placeBottom() }
+      { label: '置底', icon: '', handler: () => commands.placeBottom() },
+      { label: '删除', icon: '', handler: () => commands.delete() },
     ]
 
     return () => (
