@@ -156,6 +156,39 @@ export function useCommand(data, focusData) {
   })
 
   /**
+   * 更新某个容器组件 - 用于导入JSON
+   *
+   * 带有历史记录的常用模式：before after
+   */
+  registry({
+    name: 'updateBlock',
+    pushQueue: true,
+    execute(newBlock, oldBlock) {
+      let state = {
+        before: data.value.blocks,
+        after: (() => {
+          // 拷贝blocks
+          let blocks = [...data.value.blocks]
+          const index = data.value.blocks.indexOf(oldBlock)
+          if (index > -1) {
+            // 不能改变原有的，需要使用新生成的 blocks
+            blocks.splice(index, 1, newBlock)
+          }
+          return blocks
+        })()
+      }
+      return {
+        redo: () => {
+          data.value = { ...data.value, blocks: state.after}
+        },
+        undo: () => {
+          data.value = { ...data.value, blocks: state.before }
+        }
+      }
+    }
+  })
+
+  /**
    * 置顶操作
    */
   registry({
@@ -183,8 +216,7 @@ export function useCommand(data, focusData) {
         },
         redo: () => {
           data.value = { ...data.value, blocks: after }
-        },
-        
+        }
       }
     }
   })
@@ -200,19 +232,20 @@ export function useCommand(data, focusData) {
       // 置顶就是在所有的block中找到最大的zIndex
       let after = (() => {
         let { focusArr, unFocusArr } = focusData.value
-        let minZIndex = unFocusArr.reduce((prev, block) => {
-          return Math.min(prev, block.zIndex)
-        }, Infinity) - 1;
+        let minZIndex =
+          unFocusArr.reduce((prev, block) => {
+            return Math.min(prev, block.zIndex)
+          }, Infinity) - 1
 
         /**
          * 不能直接-1 因为index 不能出现负值 负值就看不到组件了
-         * 
+         *
          * 解决方案：这里如果是负值，则让每选中的向上，自己变成0
          */
-        if(minZIndex < 0) {
-          const dur = Math.abs(minZIndex);
-          minZIndex = 0;
-          unFocusArr.forEach(block => block.zIndex += dur)
+        if (minZIndex < 0) {
+          const dur = Math.abs(minZIndex)
+          minZIndex = 0
+          unFocusArr.forEach(block => (block.zIndex += dur))
         }
         // 控制选中的值
         focusArr.forEach(block => (block.zIndex = minZIndex))
@@ -225,16 +258,15 @@ export function useCommand(data, focusData) {
         },
         redo: () => {
           data.value = { ...data.value, blocks: after }
-        },
-        
+        }
       }
     }
   })
 
-   /**
+  /**
    * 删除操作
    */
-   registry({
+  registry({
     name: 'delete',
     pushQueue: true,
     execute() {
@@ -248,7 +280,7 @@ export function useCommand(data, focusData) {
         },
         undo: () => {
           data.value = { ...data.value, blocks: state.before }
-        },
+        }
       }
     }
   })

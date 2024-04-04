@@ -127,3 +127,21 @@
   right: 0;
   border-top: 2px dashed red;
 }
+
+.dropdown {
+  display: none;
+  position: absolute;
+  background: #fff;
+  box-shadow: 2px 2px #ccc;
+}
+.dropdown-isShow {
+  display: block;
+}
+.dropdown-item {
+  line-height: 30px;
+  width: 100px;
+  border-bottom: 1px solid #ccc;
+  text-align: center;
+  user-select: none;
+  cursor: pointer;
+}

@@ -7,6 +7,7 @@ import { useFocus } from './useFocus'
 import { useBlockDragger } from './useBlockDragger'
 import { useCommand } from './useCommand'
 import { $dialog } from '@/components/Dialog'
+import { $dropdown, DropdownItem } from '@/components/Dropdown'
 import { ElButton } from 'element-plus'
 
 export default defineComponent({
@@ -100,19 +101,60 @@ export default defineComponent({
       }
     ]
 
+    const onContextMenuBlock = (e, block) => {
+      e.preventDefault()
+      $dropdown({
+        el: e.target, // 以哪个元素为准产生一个dropdown
+        content: () => {
+          return (
+            <>
+              <DropdownItem label="删除" icon="icon-delete" onClick={() => commands.delete()}></DropdownItem>
+              <DropdownItem label="置顶" icon="icon-place-top" onClick={() => commands.placeTop()}></DropdownItem>
+              <DropdownItem label="置底" icon="icon-place-bottom" onClick={() => commands.placeBottom()}></DropdownItem>
+              <DropdownItem
+                label="查看"
+                icon="icon-browse"
+                onClick={() => {
+                  $dialog({
+                    title: '查看节点数据',
+                    content: JSON.stringify(block)
+                  })
+                }}
+              ></DropdownItem>
+              <DropdownItem
+                label="导入"
+                icon="icon-import"
+                onClick={() => {
+                  $dialog({
+                    title: '查看节点数据',
+                    content: '',
+                    footer: true,
+                    onConfirm(text) {
+                      text = JSON.parse(text)
+                      console.log("text", text)
+                      commands.updateBlock(text, block)
+                    }
+                  })
+                }}
+              ></DropdownItem>
+            </>
+          )
+        }
+      })
+    }
+
     return () =>
       !editorRef.value ? (
         <>
-          <div class="editor-container-canvas__content" style={{...containerStyle.value, margin: 0}}>
+          <div class="editor-container-canvas__content" style={{ ...containerStyle.value, margin: 0 }}>
             {data.value.blocks.map((block, index) => (
-              <EditorBlock
-                class='editor-block-preview'
-                block={block}
-              ></EditorBlock>
+              <EditorBlock class="editor-block-preview" block={block}></EditorBlock>
             ))}
           </div>
           <div>
-            <ElButton type="primary" onClick={() => editorRef.value = true}>继续编辑</ElButton>
+            <ElButton type="primary" onClick={() => (editorRef.value = true)}>
+              继续编辑
+            </ElButton>
           </div>
         </>
       ) : (
@@ -151,6 +193,7 @@ export default defineComponent({
                     }}
                     block={block}
                     onMousedown={e => onMousedown(e, block, index)}
+                    onContextmenu={e => onContextMenuBlock(e, block)}
                   ></EditorBlock>
                 ))}
                 {/* 辅助线 */}
